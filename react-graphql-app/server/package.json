@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
+    "start:projects": "node dist/projects.js",
     "dev": "tsx watch index.ts",
+    "dev:projects": "tsx watch projects.ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
@@ -15,7 +17,10 @@
   "description": "",
   "dependencies": {
     "@apollo/server": "^4.13.0",
-    "graphql": "^16.14.2"
+    "dataloader": "^2.2.3",
+    "graphql": "^16.14.2",
+    "reflect-metadata": "^0.2.2",
+    "type-graphql": "^2.0.0-rc.3"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
