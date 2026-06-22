@@ -99,6 +99,7 @@ const resolvers = {
 
 // type-graphql requires the root Query (and field resolvers) to be decorated
 // class methods, so these just call the resolvers above
+// I wanted to keep the plain resolvers in, so it's similar to the original snippet I was given 
 @Resolver(() => Project)
 export class ProjectResolver {
 	@Query(() => [Project])
