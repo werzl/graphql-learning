@@ -12,6 +12,8 @@ import {
 	Resolver,
 	Root,
 } from 'type-graphql';
+import DataLoader from 'dataloader';
+
 
 @ObjectType()
 export class User {
@@ -50,6 +52,9 @@ interface Context {
 		users: User[];
 		projects: ProjectRecord[];
 	};
+	loaders: {
+		user: DataLoader<string, User>;
+	};
 }
 
 const db: Context['db'] = {
@@ -61,27 +66,33 @@ const db: Context['db'] = {
 	projects: [
 		{ id: '1', name: 'Apollo Demo', userId: '1' },
 		{ id: '2', name: 'GraphQL Learning', userId: '2' },
-		{ id: '3', name: 'Drury Lane', userId: '4' },
+		{ id: '3', name: 'Drury Lane', userId: '3' },
 	],
 };
+
+
+function createUserLoader(db: Context['db']) {
+	return new DataLoader<string, User>(async (ids) => {
+		console.log("DB QUERY - Retrieving users");
+		const users = db.users.filter(u => ids.includes(u.id));
+		
+		return ids.map((id: string) => users.find(u => u.id === id) ?? new Error("User not found"));
+	});
+}
+
 
 const resolvers = {
 	Query: {
 		// Fetches the list of projects
-		projects: (ctx: Context): ProjectRecord[] => {
+		projects: (context: Context): ProjectRecord[] => {
 			console.log("DB QUERY - Retrieve Projects");
-			return ctx.db.projects
+			return context.db.projects
 		},
 	},
 	Project: {
 		// Resolves the user for each project
-		user: (project: ProjectRecord, ctx: Context): User => {
-			console.log("DB QUERY - Retrieve User");
-			const user = ctx.db.users.find((u) => u.id === project.userId);
-			if (!user) {
-				throw new Error(`User ${project.userId} not found`);
-			}
-			return user;
+		user: (project: ProjectRecord, context: Context): Promise<User> => {
+			return context.loaders.user.load(project.userId);
 		},
 	},
 };
@@ -111,7 +122,10 @@ const server = new ApolloServer<Context>({ schema });
 // Starts an ApolloServer with a sandbox to test queries on at localhost:4000
 const result = await startStandaloneServer(server, {
 	listen: { port: 4000 },
-	context: async () => ({ db }),
+	context: async () => ({ 
+		db,
+		loaders: { user: createUserLoader(db) }
+	}),
 });
 
 console.log(`Server ready at ${result.url}`);
